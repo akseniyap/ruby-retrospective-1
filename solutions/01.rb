@@ -7,7 +7,7 @@ class Array
 
   def index_by &block
     hash = {}
-    each { |element| hash[block.call(element)] = element }
+    each { |element| hash[yield(element)] = element }
     hash
   end
 
