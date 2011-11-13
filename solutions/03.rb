@@ -10,7 +10,7 @@ class Product
   attr_reader :name, :price, :promotion
 
   def initialize(name, price, promotion={})
-    price = BigDecimal price
+    price = price.to_d
 
     validate_length_of             name
     validate_belonging_to_interval price
