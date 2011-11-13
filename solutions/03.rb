@@ -15,8 +15,8 @@ class Product
     validate_length_of name
     validate_value_of  price
 
-    @name = name
-    @price = price
+    @name      = name
+    @price     = price
     @promotion = Promotion.create promotion
   end
 
@@ -38,7 +38,7 @@ class Inventory
   attr_reader :stock, :coupons
 
   def initialize
-    @stock = []
+    @stock   = []
     @coupons = []
   end
 
@@ -82,7 +82,7 @@ class CartItem
   attr_accessor :quantity
 
   def initialize(product, quantity)
-    @product = product
+    @product  = product
     @quantity = 0
 
     increase_quantity quantity
@@ -120,9 +120,9 @@ class ShoppingCart
 
   def initialize(inventory, invoice = '')
     @inventory = inventory
-    @goods = []
-    @coupon = Coupon::NoCoupon.new
-    @invoice = invoice
+    @goods     = []
+    @coupon    = Coupon::NoCoupon.new
+    @invoice   = invoice
   end
 
   def add(name, quantity = 1)
@@ -154,7 +154,7 @@ class ShoppingCart
   end
 
   def coupon_discount
-    price = products_price
+    price    = products_price
     discount = products_discount
 
     @coupon.discount(price - discount)
@@ -232,7 +232,7 @@ module Promotion
     attr_reader :size, :discount
 
     def initialize(size, discount)
-      @size = size
+      @size     = size
       @discount = discount
     end
 
@@ -255,7 +255,7 @@ module Promotion
     attr_reader :size, :discount
 
     def initialize(size, discount)
-      @size = size
+      @size     = size
       @discount = discount
     end
 
@@ -309,7 +309,7 @@ module Coupon
     attr_reader :name, :percent
 
     def initialize(name, percent)
-      @name = name
+      @name    = name
       @percent = percent
     end
 
@@ -326,7 +326,7 @@ module Coupon
     attr_reader :name, :amount
 
     def initialize(name, amount)
-      @name = name
+      @name   = name
       @amount = amount.to_d
     end
 
