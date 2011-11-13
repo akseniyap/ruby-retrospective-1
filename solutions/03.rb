@@ -116,11 +116,11 @@ end
 class ShoppingCart
   attr_reader :goods, :coupon
 
-  def initialize(inventory, invoice = '')
+  def initialize(inventory)
     @inventory = inventory
     @goods     = []
     @coupon    = Coupon::NoCoupon.new
-    @invoice   = invoice
+    @invoice   = ''
   end
 
   def add(name, quantity = 1)
