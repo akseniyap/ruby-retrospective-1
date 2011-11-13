@@ -145,23 +145,16 @@ class ShoppingCart
     @coupon = @inventory.find coupon: name
   end
 
-  def products_price
-    @goods.map(&:price).inject(:+)
-  end
-
-  def products_discount
-    @goods.map(&:discount).inject(:+)
-  end
-
-  def coupon_discount
-    price    = products_price
-    discount = products_discount
-
-    @coupon.discount(price - discount)
+  def price_for
+    prices = {}
+    prices[:purchases] = @goods.map(&:price).inject(:+)
+    prices[:promotions] = @goods.map(&:discount).inject(:+)
+    prices[:coupon] = @coupon.discount(prices[:purchases] - prices[:promotions])
+    prices
   end
 
   def total
-    products_price - products_discount - coupon_discount
+    price_for[:purchases] - price_for[:promotions] - price_for[:coupon]
   end
 
   def invoice
@@ -376,7 +369,7 @@ class Invoice
       print item.product.promotion.invoice, '', amount(-item.discount)
     end
 
-    print @cart.coupon.invoice, '', amount(-@cart.coupon_discount)
+    print @cart.coupon.invoice, '', amount(-@cart.price_for[:coupon])
   end
 
   def invoice_total
