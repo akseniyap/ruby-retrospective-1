@@ -365,32 +365,29 @@ class Invoice
   end
 
   def invoice_header
-    @invoice << SEPARATOR
+    print_separator
     print 'Name', 'qty', 'price'
-    @invoice << SEPARATOR
+    print_separator
   end
 
-  def invoice_items
+  def invoice_middle
     @cart.goods.each do |item|
       print item.product.name, item.quantity, amount(item.price)
       print item.product.promotion.invoice, '', amount(-item.discount)
     end
-  end
 
-  def invoice_coupon
     print @cart.coupon.invoice, '', amount(-@cart.coupon_discount)
   end
 
   def invoice_total
-    @invoice << SEPARATOR
+    print_separator
     print 'TOTAL', '', amount(@cart.total)
-    @invoice << SEPARATOR
+    print_separator
   end
 
   def create_invoice
     invoice_header
-    invoice_items
-    invoice_coupon
+    invoice_middle
     invoice_total
   end
 
@@ -400,5 +397,9 @@ class Invoice
 
   def print(*args)
     @invoice << "| %-40s %5s | %8s |\n" % args unless args.first.strip == ''
+  end
+
+  def print_separator
+    @invoice << SEPARATOR
   end
 end
