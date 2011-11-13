@@ -335,7 +335,7 @@ module Coupon
     end
 
     def invoice
-      "Coupon #{@name} - #{sprintf '%.2f', @amount.to_f} off"
+      "Coupon #{@name} - #{sprintf '%.2f', @amount} off"
     end
   end
 
@@ -361,7 +361,7 @@ class Invoice
   end
 
   def print(price)
-    sprintf '%.2f', price.to_f
+    sprintf '%.2f', price
   end
 
   def invoice_header
@@ -391,7 +391,7 @@ class Invoice
   end
 
   def invoice_total
-    SEPARATOR + TOTAL + "#{sprintf('%.2f', cart.total.to_f).to_s.rjust 9} |\n" + SEPARATOR
+    SEPARATOR + TOTAL + "#{sprintf('%.2f', cart.total).to_s.rjust 9} |\n" + SEPARATOR
   end
 
   def create_invoice
