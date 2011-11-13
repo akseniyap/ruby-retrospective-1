@@ -234,7 +234,7 @@ module Promotion
     def discount(price, quantity)
       packs = bought_packages quantity
 
-      packs * @size * price * @percent / 100
+      packs * @size * price * @percent / '100'.to_d
     end
 
     def description
@@ -257,7 +257,7 @@ module Promotion
     def discount(price, quantity)
       discounted = discounted_items quantity
 
-      discounted * price * @percent / 100
+      discounted * price * @percent / '100'.to_d
     end
 
     def number_suffix
@@ -305,7 +305,7 @@ module Coupon
     end
 
     def discount(price)
-      price * @percent / 100
+      price * @percent / '100'.to_d
     end
 
     def description
