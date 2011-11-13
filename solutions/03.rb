@@ -20,10 +20,6 @@ class Product
     @promotion = Promotion.create promotion
   end
 
-  def promo?
-    !@promotion.kind_of? Promotion::NoPromotion
-  end
-
   private
     def validate_length_of(product)
       error_message = "Name should be at most #{PRODUCT_NAME_LIMIT} symbols"
@@ -105,6 +101,10 @@ class CartItem
 
   def discount
     @product.promotion.item_discount @product.price, @quantity
+  end
+
+  def promotional?
+    not discount.zero?
   end
 
   private
@@ -374,7 +374,7 @@ class Invoice
       body += "| #{cart_item.product.name.ljust 40} #{cart_item.quantity.to_s.rjust 5}" +
               " | #{print(cart_item.price).rjust 8} |\n"
       body += "|   #{cart_item.product.promotion.invoice.ljust 44} | " +
-              "#{print(0 - cart_item.discount).rjust 8} |\n" if cart_item.product.promo?
+              "#{print(0 - cart_item.discount).rjust 8} |\n" if cart_item.promotional?
     end
 
     body
