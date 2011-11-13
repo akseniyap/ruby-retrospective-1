@@ -22,9 +22,9 @@ class Product
 
   def initialize_promotion(hash)
     promotion = nil
-    promotion = GetOneFree.new(hash[:get_one_free]) unless hash[:get_one_free].nil?
-    promotion = Package.new(*hash[:package].to_a[0]) unless hash[:package].nil?
-    promotion = Threshold.new(*hash[:threshold].to_a[0]) unless hash[:threshold].nil?
+    promotion = Promotion::GetOneFree.new(hash[:get_one_free]) unless hash[:get_one_free].nil?
+    promotion = Promotion::Package.new(*hash[:package].to_a[0]) unless hash[:package].nil?
+    promotion = Promotion::Threshold.new(*hash[:threshold].to_a[0]) unless hash[:threshold].nil?
 
     promotion
   end
@@ -67,8 +67,8 @@ class Inventory
 
     type, value = options.to_a.first
 
-    coupon = PercentCoupon.new(name, value) if type == :percent
-    coupon = AmountCoupon.new(name, value) if type == :amount
+    coupon = Coupon::PercentCoupon.new(name, value) if type == :percent
+    coupon = Coupon::AmountCoupon.new(name, value) if type == :amount
 
     @coupons << coupon
   end
@@ -201,124 +201,128 @@ class ShoppingCart
     end
 end
 
-class GetOneFree
-  attr_reader :n_th_free
+module Promotion
+  class GetOneFree
+    attr_reader :n_th_free
 
-  def initialize(n_th_free)
-    validate_numericallity_of n_th_free
+    def initialize(n_th_free)
+      validate_numericallity_of n_th_free
 
-    @n_th_free = n_th_free
-  end
-
-  def free_items(quantity)
-    quantity / @n_th_free
-  end
-
-  def paid_items(quantity)
-    quantity - free_items(quantity)
-  end
-
-  def item_discount(price, quantity)
-    price * free_items(quantity)
-  end
-
-  def invoice
-    "(buy #{@n_th_free - 1}, get 1 free)"
-  end
-
-  private
-    def validate_numericallity_of(n_th_free)
-      error_message = "The value should be positive integer more than 1"
-      raise error_message if n_th_free <= 1 or !n_th_free.kind_of? Integer
+      @n_th_free = n_th_free
     end
+
+    def free_items(quantity)
+      quantity / @n_th_free
+    end
+
+    def paid_items(quantity)
+      quantity - free_items(quantity)
+    end
+
+    def item_discount(price, quantity)
+      price * free_items(quantity)
+    end
+
+    def invoice
+      "(buy #{@n_th_free - 1}, get 1 free)"
+    end
+
+    private
+      def validate_numericallity_of(n_th_free)
+        error_message = "The value should be positive integer more than 1"
+        raise error_message if n_th_free <= 1 or !n_th_free.kind_of? Integer
+      end
+  end
+
+  class Package
+    attr_reader :size, :discount
+
+    def initialize(size, discount)
+      @size = size
+      @discount = discount
+    end
+
+    def bought_packages(quantity)
+      quantity / @size
+    end
+
+    def item_discount(price, quantity)
+      packs = bought_packages quantity
+
+      packs * @size * price * @discount / 100
+    end
+
+    def invoice
+      "(get #{@discount}% off for every #{@size})"
+    end
+  end
+
+  class Threshold
+    attr_reader :size, :discount
+
+    def initialize(size, discount)
+      @size = size
+      @discount = discount
+    end
+
+    def discounted_items(quantity)
+      quantity - @size < 0 ? 0 : quantity - @size
+    end
+
+    def item_discount(price, quantity)
+      discounted = discounted_items quantity
+
+      discounted * price * @discount / 100
+    end
+
+    def number_suffix
+      suffixes = {1 => 'st', 2 => 'nd', 3 => 'rd'}
+
+      suffix = suffixes[@size % 10] || 'th'
+      suffix = 'th' if [11, 12, 13].include? @size
+
+      suffix
+    end
+
+    def invoice
+      "(#{@discount}% off of every after the #{@size}#{number_suffix})"
+    end
+  end
 end
 
-class Package
-  attr_reader :size, :discount
+module Coupon
+  class PercentCoupon
+    attr_reader :name, :percent
 
-  def initialize(size, discount)
-    @size = size
-    @discount = discount
+    def initialize(name, percent)
+      @name = name
+      @percent = percent
+    end
+
+    def discount(price)
+      price * @percent / 100
+    end
+
+    def invoice
+      "Coupon #{@name} - #{@percent}% off"
+    end
   end
 
-  def bought_packages(quantity)
-    quantity / @size
-  end
+  class AmountCoupon
+    attr_reader :name, :amount
 
-  def item_discount(price, quantity)
-    packs = bought_packages quantity
+    def initialize(name, amount)
+      @name = name
+      @amount = amount.to_d
+    end
 
-    packs * @size * price * @discount / 100
-  end
+    def discount(price)
+      price - @amount < 0 ? price : @amount
+    end
 
-  def invoice
-    "(get #{@discount}% off for every #{@size})"
-  end
-end
-
-class Threshold
-  attr_reader :size, :discount
-
-  def initialize(size, discount)
-    @size = size
-    @discount = discount
-  end
-
-  def discounted_items(quantity)
-    quantity - @size < 0 ? 0 : quantity - @size
-  end
-
-  def item_discount(price, quantity)
-    discounted = discounted_items quantity
-
-    discounted * price * @discount / 100
-  end
-
-  def number_suffix
-    suffixes = {1 => 'st', 2 => 'nd', 3 => 'rd'}
-
-    suffix = suffixes[@size % 10] || 'th'
-    suffix = 'th' if [11, 12, 13].include? @size
-
-    suffix
-  end
-
-  def invoice
-    "(#{@discount}% off of every after the #{@size}#{number_suffix})"
-  end
-end
-
-class PercentCoupon
-  attr_reader :name, :percent
-
-  def initialize(name, percent)
-    @name = name
-    @percent = percent
-  end
-
-  def discount(price)
-    price * @percent / 100
-  end
-
-  def invoice
-    "Coupon #{@name} - #{@percent}% off"
-  end
-end
-
-class AmountCoupon
-  attr_reader :name, :amount
-
-  def initialize(name, amount)
-    @name = name
-    @amount = amount.to_d
-  end
-
-  def discount(price)
-    price - @amount < 0 ? price : @amount
-  end
-
-  def invoice
-    "Coupon #{@name} - #{sprintf '%.2f', @amount.to_f} off"
+    def invoice
+      "Coupon #{@name} - #{sprintf '%.2f', @amount.to_f} off"
+    end
   end
 end
 
