@@ -104,8 +104,6 @@ class CartItem
   end
 
   def discount
-    return '0'.to_d unless @product.promo?
-
     @product.promotion.item_discount @product.price, @quantity
   end
 
@@ -156,8 +154,6 @@ class ShoppingCart
   end
 
   def coupon_discount
-    return '0'.to_d if @coupon.nil?
-
     price = products_price
     discount = products_discount
 
