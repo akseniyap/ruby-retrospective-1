@@ -62,7 +62,7 @@ class Inventory
   end
 
   def new_cart
-    cart = ShoppingCart.new self
+    ShoppingCart.new self
   end
 
   private
