@@ -1,7 +1,7 @@
 class Array
   def to_hash
     hash = {}
-    each { |element| hash[element[0]] = element[1] }
+    each { |key, value| hash[key] = value }
     hash
   end
 
