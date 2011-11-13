@@ -30,7 +30,7 @@ class Product
   end
 
   def promo?
-    !promotion.nil?
+    !@promotion.nil?
   end
 
   private
@@ -56,27 +56,27 @@ class Inventory
   end
 
   def register(name, price, promotion = {})
-    validate_uniqueness_of name, stock
+    validate_uniqueness_of name, @stock
 
     product = Product.new name, price, promotion
-    stock << product
+    @stock << product
   end
 
   def register_coupon(name, options)
-    validate_uniqueness_of name, coupons
+    validate_uniqueness_of name, @coupons
 
     type, value = options.to_a.first
 
     coupon = PercentCoupon.new(name, value) if type == :percent
     coupon = AmountCoupon.new(name, value) if type == :amount
 
-    coupons << coupon
+    @coupons << coupon
   end
 
   def find(item)
     type, name = item.to_a.first
 
-    type == :product ? container = stock : container = coupons
+    type == :product ? container = @stock : container = @coupons
 
     container.select { |item| item.name == name }.first
   end
@@ -108,19 +108,19 @@ class CartItem
   end
 
   def increase_quantity(quantity)
-    validate_value_of self.quantity + quantity
+    validate_value_of @quantity + quantity
 
-    self.quantity += quantity
+    @quantity += quantity
   end
 
   def price
-    product.price * quantity
+    @product.price * @quantity
   end
 
   def discount
-    return '0'.to_d unless product.promo?
+    return '0'.to_d unless @product.promo?
 
-    product.promotion.item_discount product.price, quantity
+    @product.promotion.item_discount @product.price, @quantity
   end
 
   private
@@ -142,40 +142,40 @@ class ShoppingCart
   end
 
   def add(name, quantity = 1)
-    validate_registration_of name, inventory.stock
+    validate_registration_of name, @inventory.stock
 
-    item = goods.select { |item| item.product.name == name }
+    item = @goods.select { |item| item.product.name == name }
     if item.empty?
-      product = inventory.find product: name
+      product = @inventory.find product: name
 
-      goods << CartItem.new(product, quantity)
+      @goods << CartItem.new(product, quantity)
     else
       item.first.increase_quantity quantity
     end
   end
 
   def use(name)
-    validate_registration_of name, inventory.coupons
+    validate_registration_of name, @inventory.coupons
     validate_claimed_coupon
 
-    self.coupon = inventory.find coupon: name
+    @coupon = @inventory.find coupon: name
   end
 
   def products_price
-    goods.inject(0) { |sum, cart_item| sum += cart_item.price }
+    @goods.inject(0) { |sum, cart_item| sum += cart_item.price }
   end
 
   def products_discount
-    goods.inject(0) { |sum, cart_item| sum += cart_item.discount }
+    @goods.inject(0) { |sum, cart_item| sum += cart_item.discount }
   end
 
   def coupon_discount
-    return '0'.to_d if coupon.nil?
+    return '0'.to_d if @coupon.nil?
 
     price = products_price
     discount = products_discount
 
-    coupon.discount(price - discount)
+    @coupon.discount(price - discount)
   end
 
   def total
@@ -183,7 +183,7 @@ class ShoppingCart
   end
 
   def invoice
-    self.invoice = (Invoice.new self).invoice
+    @invoice = (Invoice.new self).invoice
   end
 
   private
@@ -211,7 +211,7 @@ class GetOneFree
   end
 
   def free_items(quantity)
-    quantity / n_th_free
+    quantity / @n_th_free
   end
 
   def paid_items(quantity)
@@ -223,7 +223,7 @@ class GetOneFree
   end
 
   def invoice
-    "(buy #{n_th_free - 1}, get 1 free)"
+    "(buy #{@n_th_free - 1}, get 1 free)"
   end
 
   private
@@ -242,17 +242,17 @@ class Package
   end
 
   def bought_packages(quantity)
-    quantity / size
+    quantity / @size
   end
 
   def item_discount(price, quantity)
     packs = bought_packages quantity
 
-    packs * size * price * discount / 100
+    packs * @size * price * @discount / 100
   end
 
   def invoice
-    "(get #{discount}% off for every #{size})"
+    "(get #{@discount}% off for every #{@size})"
   end
 end
 
@@ -265,26 +265,26 @@ class Threshold
   end
 
   def discounted_items(quantity)
-    quantity - size < 0 ? 0 : quantity - size
+    quantity - @size < 0 ? 0 : quantity - @size
   end
 
   def item_discount(price, quantity)
     discounted = discounted_items quantity
 
-    discounted * price * discount / 100
+    discounted * price * @discount / 100
   end
 
   def number_suffix
     suffixes = {1 => 'st', 2 => 'nd', 3 => 'rd'}
 
-    suffix = suffixes[size % 10] || 'th'
-    suffix = 'th' if [11, 12, 13].include? size
+    suffix = suffixes[@size % 10] || 'th'
+    suffix = 'th' if [11, 12, 13].include? @size
 
     suffix
   end
 
   def invoice
-    "(#{discount}% off of every after the #{size}#{number_suffix})"
+    "(#{@discount}% off of every after the #{@size}#{number_suffix})"
   end
 end
 
@@ -297,11 +297,11 @@ class PercentCoupon
   end
 
   def discount(price)
-    price * percent / 100
+    price * @percent / 100
   end
 
   def invoice
-    "Coupon #{name} - #{percent}% off"
+    "Coupon #{@name} - #{@percent}% off"
   end
 end
 
@@ -314,11 +314,11 @@ class AmountCoupon
   end
 
   def discount(price)
-    price - amount < 0 ? price : amount
+    price - @amount < 0 ? price : @amount
   end
 
   def invoice
-    "Coupon #{name} - #{sprintf '%.2f', amount.to_f} off"
+    "Coupon #{@name} - #{sprintf '%.2f', @amount.to_f} off"
   end
 end
 
@@ -345,7 +345,7 @@ class Invoice
   def invoice_body
     body = ''
 
-    cart.goods.each do |cart_item|
+    @cart.goods.each do |cart_item|
       body += "| #{cart_item.product.name.ljust 40} #{cart_item.quantity.to_s.rjust 5}" +
               " | #{print(cart_item.price).rjust 8} |\n"
       body += "|   #{cart_item.product.promotion.invoice.ljust 44} | " +
