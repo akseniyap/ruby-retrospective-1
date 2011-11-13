@@ -5,7 +5,7 @@ class Array
     hash
   end
 
-  def index_by &block
+  def index_by
     hash = {}
     each { |element| hash[yield(element)] = element }
     hash
