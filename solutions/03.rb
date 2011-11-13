@@ -310,7 +310,7 @@ class AmountCoupon
 
   def initialize(name, amount)
     @name = name
-    @amount = amount
+    @amount = amount.to_d
   end
 
   def discount(price)
