@@ -90,12 +90,12 @@ class CartItem
     validate_value_of quantity
 
     @product = product
-    @quantity = quantity
+    @quantity = 0
+
+    increase_quantity quantity
   end
 
   def increase_quantity(quantity)
-    validate_value_of @quantity + quantity
-
     @quantity += quantity
   end
 
