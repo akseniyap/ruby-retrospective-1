@@ -9,7 +9,7 @@ class Product
 
   attr_reader :name, :price, :promotion
 
-  def initialize(name, price, promotion = {})
+  def initialize(name, price, promotion)
     price = price.to_d
 
     validate_length_of             name
@@ -123,7 +123,7 @@ class ShoppingCart
   def initialize(inventory, invoice = '')
     @inventory = inventory
     @goods = []
-    @coupon = nil
+    @coupon = Coupon::NoCoupon.new
     @invoice = invoice
   end
 
@@ -183,7 +183,7 @@ class ShoppingCart
     def validate_claimed_coupon
       error_message = "You alredy claimed to use #{coupon}"
 
-      raise error_message unless self.coupon.nil?
+      raise error_message unless @coupon.kind_of? Coupon::NoCoupon
     end
 end
 
@@ -388,7 +388,7 @@ class Invoice
     coupon = ''
 
     coupon += "| #{cart.coupon.invoice.ljust 46} | " +
-              "#{print(0 - cart.coupon_discount).rjust 8} |\n" unless cart.coupon.nil?
+              "#{print(0 - cart.coupon_discount).rjust 8} |\n" unless cart.coupon.kind_of? Coupon::NoCoupon
 
     coupon
   end
