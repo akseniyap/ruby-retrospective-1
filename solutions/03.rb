@@ -217,7 +217,7 @@ module Promotion
     end
 
     def invoice
-      "(buy #{@n_th_free - 1}, get 1 free)"
+      "  (buy #{@n_th_free - 1}, get 1 free)"
     end
 
     private
@@ -247,7 +247,7 @@ module Promotion
     end
 
     def invoice
-      "(get #{@discount}% off for every #{@size})"
+      "  (get #{@discount}% off for every #{@size})"
     end
   end
 
@@ -279,7 +279,7 @@ module Promotion
     end
 
     def invoice
-      "(#{@discount}% off of every after the #{@size}#{number_suffix})"
+      "  (#{@discount}% off of every after the #{@size}#{number_suffix})"
     end
   end
 
@@ -366,8 +366,6 @@ class Invoice
   end
 
   def invoice_header
-    # SEPARATOR + print('Name', 'qty', 'price') + SEPARATOR
-
     @invoice << SEPARATOR
     print 'Name', 'qty', 'price'
     @invoice << SEPARATOR
@@ -376,7 +374,7 @@ class Invoice
   def invoice_items
     @cart.goods.each do |item|
       print item.product.name, item.quantity, amount(item.price)
-      print "  #{item.product.promotion.invoice}", '', amount(-item.discount)
+      print item.product.promotion.invoice, '', amount(-item.discount)
     end
   end
 
