@@ -12,8 +12,8 @@ class Product
   def initialize(name, price, promotion)
     price = price.to_d
 
-    validate_length_of             name
-    validate_belonging_to_interval price
+    validate_length_of name
+    validate_value_of  price
 
     @name = name
     @price = price
@@ -21,13 +21,13 @@ class Product
   end
 
   private
-    def validate_length_of(product)
+    def validate_length_of(name)
       error_message = "Name should be at most #{PRODUCT_NAME_LIMIT} symbols"
 
-      raise error_message if product.size > PRODUCT_NAME_LIMIT
+      raise error_message if name.size > PRODUCT_NAME_LIMIT
     end
 
-    def validate_belonging_to_interval(price)
+    def validate_value_of(price)
       error_message = "Price should be in [#{MIN_PRICE}, #{MAX_PRICE}]"
 
       raise error_message if price < MIN_PRICE or price > MAX_PRICE
@@ -45,8 +45,7 @@ class Inventory
   def register(name, price, promotion = {})
     validate_uniqueness_of name, @stock
 
-    product = Product.new name, price, promotion
-    @stock << product
+    @stock << Product.new(name, price, promotion)
   end
 
   def register_coupon(name, options)
@@ -58,7 +57,7 @@ class Inventory
   def find(item)
     type, name = item.to_a.first
 
-    type == :product ? container = @stock : container = @coupons
+    container = type == :product ? @stock : @coupons
 
     container.select { |item| item.name == name }.first
   end
@@ -110,6 +109,7 @@ class CartItem
   private
     def validate_value_of(quantity)
       error_message = "Quantity should be positive integer less than 100"
+
       raise error_message if quantity <= 0 or quantity > QUANTITY_LIMIT
     end
 end
@@ -223,6 +223,7 @@ module Promotion
     private
       def validate_numericallity_of(n_th_free)
         error_message = "The value should be positive integer more than 1"
+
         raise error_message if n_th_free <= 1 or !n_th_free.kind_of? Integer
       end
   end
