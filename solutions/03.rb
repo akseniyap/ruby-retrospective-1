@@ -263,7 +263,7 @@ module Promotion
     end
 
     def discounted_items(quantity)
-      quantity - @size < 0 ? 0 : quantity - @size
+      (quantity - @size) < 0 ? 0 : (quantity - @size)
     end
 
     def item_discount(price, quantity)
@@ -334,7 +334,7 @@ module Coupon
     end
 
     def discount(price)
-      price - @amount < 0 ? price : @amount
+      (price - @amount) < 0 ? price : @amount
     end
 
     def invoice
