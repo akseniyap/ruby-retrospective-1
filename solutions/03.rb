@@ -74,7 +74,6 @@ class Inventory
     end
 end
 
-
 class CartItem
   QUANTITY_LIMIT = 99
 
@@ -99,7 +98,7 @@ class CartItem
   end
 
   def discount
-    @product.promotion.item_discount @product.price, @quantity
+    @product.promotion.discount @product.price, @quantity
   end
 
   def promotional?
@@ -115,8 +114,7 @@ class CartItem
 end
 
 class ShoppingCart
-  attr_reader :goods, :inventory
-  attr_accessor :coupon, :invoice
+  attr_reader :goods, :coupon
 
   def initialize(inventory, invoice = '')
     @inventory = inventory
@@ -146,15 +144,15 @@ class ShoppingCart
   end
 
   def price_for
-    prices = {}
-    prices[:purchases] = @goods.map(&:price).inject(:+)
-    prices[:promotions] = @goods.map(&:discount).inject(:+)
-    prices[:coupon] = @coupon.discount(prices[:purchases] - prices[:promotions])
-    prices
+    price = {}
+    price[:purchases] = @goods.map(&:price).inject(:+)
+    price[:discounts] = @goods.map(&:discount).inject(:+)
+    price[:coupon]    = @coupon.discount(price[:purchases] - price[:discounts])
+    price
   end
 
   def total
-    price_for[:purchases] - price_for[:promotions] - price_for[:coupon]
+    price_for[:purchases] - price_for[:discounts] - price_for[:coupon]
   end
 
   def invoice
@@ -181,14 +179,14 @@ module Promotion
     name, options = hash.first
 
     case name
-      when :get_one_free then GetOneFree.new options
-      when :package      then Package.new *options.first
-      when :threshold    then Threshold.new *options.first
+      when :get_one_free then GetOneFreePromotion.new options
+      when :package      then PackagePromotion.new *options.first
+      when :threshold    then ThresholdPromotion.new *options.first
       else NoPromotion.new
     end
   end
 
-  class GetOneFree
+  class GetOneFreePromotion
     attr_reader :n_th_free
 
     def initialize(n_th_free)
@@ -205,11 +203,11 @@ module Promotion
       quantity - free_items(quantity)
     end
 
-    def item_discount(price, quantity)
+    def discount(price, quantity)
       price * free_items(quantity)
     end
 
-    def invoice
+    def description
       "  (buy #{@n_th_free - 1}, get 1 free)"
     end
 
@@ -217,71 +215,71 @@ module Promotion
       def validate_numericallity_of(n_th_free)
         error_message = "The value should be positive integer more than 1"
 
-        raise error_message if n_th_free <= 1 or !n_th_free.kind_of? Integer
+        raise error_message if n_th_free <= 1 or not n_th_free.kind_of? Integer
       end
   end
 
-  class Package
-    attr_reader :size, :discount
+  class PackagePromotion
+    attr_reader :size, :percent
 
-    def initialize(size, discount)
-      @size     = size
-      @discount = discount
+    def initialize(size, percent)
+      @size    = size
+      @percent = percent
     end
 
     def bought_packages(quantity)
       quantity / @size
     end
 
-    def item_discount(price, quantity)
+    def discount(price, quantity)
       packs = bought_packages quantity
 
-      packs * @size * price * @discount / 100
+      packs * @size * price * @percent / 100
     end
 
-    def invoice
-      "  (get #{@discount}% off for every #{@size})"
+    def description
+      "  (get #{@percent}% off for every #{@size})"
     end
   end
 
-  class Threshold
-    attr_reader :size, :discount
+  class ThresholdPromotion
+    attr_reader :threshold, :percent
 
-    def initialize(size, discount)
-      @size     = size
-      @discount = discount
+    def initialize(threshold, percent)
+      @threshold = threshold
+      @percent   = percent
     end
 
     def discounted_items(quantity)
-      (quantity - @size) < 0 ? 0 : (quantity - @size)
+      (quantity - @threshold) < 0 ? 0 : (quantity - @threshold)
     end
 
-    def item_discount(price, quantity)
+    def discount(price, quantity)
       discounted = discounted_items quantity
 
-      discounted * price * @discount / 100
+      discounted * price * @percent / 100
     end
 
     def number_suffix
       suffixes = {1 => 'st', 2 => 'nd', 3 => 'rd'}
 
-      suffix = suffixes[@size % 10] || 'th'
-      suffix = 'th' if [11, 12, 13].include? @size
+      suffix = suffixes[@threshold % 10] || 'th'
+      suffix = 'th' if [11, 12, 13].include? @threshold
 
       suffix
     end
 
-    def invoice
-      "  (#{@discount}% off of every after the #{@size}#{number_suffix})"
+    def description
+      "  (#{@percent}% off of every after the #{@threshold}#{number_suffix})"
     end
   end
 
   class NoPromotion
-    def item_discount(price, quantity)
+    def discount(price, quantity)
       0
     end
 
-    def invoice
+    def description
       ''
     end
   end
@@ -299,7 +297,7 @@ module Coupon
   end
 
   class PercentCoupon
-    attr_reader :name, :percent
+    attr_reader :name
 
     def initialize(name, percent)
       @name    = name
@@ -310,13 +308,13 @@ module Coupon
       price * @percent / 100
     end
 
-    def invoice
+    def description
       "Coupon #{@name} - #{@percent}% off"
     end
   end
 
   class AmountCoupon
-    attr_reader :name, :amount
+    attr_reader :name
 
     def initialize(name, amount)
       @name   = name
@@ -327,19 +325,17 @@ module Coupon
       (price - @amount) < 0 ? price : @amount
     end
 
-    def invoice
+    def description
       "Coupon #{@name} - #{"%5.2f" % @amount} off"
     end
   end
 
   class NoCoupon
-    attr_reader :name
-
     def discount(order_price)
       0
     end
 
-    def invoice
+    def description
       ''
     end
   end
@@ -366,10 +362,10 @@ class Invoice
   def invoice_middle
     @cart.goods.each do |item|
       print item.product.name, item.quantity, amount(item.price)
-      print item.product.promotion.invoice, '', amount(-item.discount)
+      print item.product.promotion.description, '', amount(-item.discount)
     end
 
-    print @cart.coupon.invoice, '', amount(-@cart.price_for[:coupon])
+    print @cart.coupon.description, '', amount(-@cart.price_for[:coupon])
   end
 
   def invoice_total
@@ -388,11 +384,11 @@ class Invoice
     "%5.2f" % decimal
   end
 
-  def print(*args)
-    @invoice << "| %-40s %5s | %8s |\n" % args unless args.first.strip == ''
-  end
-
   def print_separator
     @invoice << SEPARATOR
+  end
+
+  def print(*args)
+    @invoice << "| %-40s %5s | %8s |\n" % args unless args.first.strip == ''
   end
 end
