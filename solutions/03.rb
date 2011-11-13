@@ -82,8 +82,6 @@ class CartItem
   attr_accessor :quantity
 
   def initialize(product, quantity)
-    validate_value_of quantity
-
     @product = product
     @quantity = 0
 
@@ -91,6 +89,8 @@ class CartItem
   end
 
   def increase_quantity(quantity)
+    validate_value_of @quantity + quantity
+
     @quantity += quantity
   end
 
@@ -400,6 +400,6 @@ class Invoice
   end
 
   def print(*args)
-    @invoice << "| %-40s %5s | %8s |\n" % args unless args[0].strip == ''
+    @invoice << "| %-40s %5s | %8s |\n" % args unless args.first.strip == ''
   end
 end
