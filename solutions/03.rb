@@ -59,7 +59,7 @@ class Inventory
 
     container = type == :product ? @stock : @coupons
 
-    container.select { |item| item.name == name }.first
+    container.detect { |item| item.name == name }
   end
 
   def new_cart
@@ -128,13 +128,13 @@ class ShoppingCart
   def add(name, quantity = 1)
     validate_registration_of name, @inventory.stock
 
-    item = @goods.select { |item| item.product.name == name }
-    if item.empty?
+    item = @goods.detect { |item| item.product.name == name }
+    if item
+      item.increase_quantity quantity
+    else
       product = @inventory.find product: name
 
       @goods << CartItem.new(product, quantity)
-    else
-      item.first.increase_quantity quantity
     end
   end
 
