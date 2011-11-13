@@ -17,20 +17,11 @@ class Product
 
     @name = name
     @price = price
-    @promotion = initialize_promotion promotion
-  end
-
-  def initialize_promotion(hash)
-    promotion = nil
-    promotion = Promotion::GetOneFree.new(hash[:get_one_free]) unless hash[:get_one_free].nil?
-    promotion = Promotion::Package.new(*hash[:package].to_a[0]) unless hash[:package].nil?
-    promotion = Promotion::Threshold.new(*hash[:threshold].to_a[0]) unless hash[:threshold].nil?
-
-    promotion
+    @promotion = Promotion.create promotion
   end
 
   def promo?
-    !@promotion.nil?
+    !@promotion.kind_of? Promotion::NoPromotion
   end
 
   private
@@ -65,12 +56,7 @@ class Inventory
   def register_coupon(name, options)
     validate_uniqueness_of name, @coupons
 
-    type, value = options.to_a.first
-
-    coupon = Coupon::PercentCoupon.new(name, value) if type == :percent
-    coupon = Coupon::AmountCoupon.new(name, value) if type == :amount
-
-    @coupons << coupon
+    @coupons << Coupon.create(name, options)
   end
 
   def find(item)
@@ -202,6 +188,17 @@ class ShoppingCart
 end
 
 module Promotion
+  def self.create(hash)
+    name, options = hash.first
+
+    case name
+      when :get_one_free then GetOneFree.new options
+      when :package      then Package.new *options.first
+      when :threshold    then Threshold.new *options.first
+      else NoPromotion.new
+    end
+  end
+
   class GetOneFree
     attr_reader :n_th_free
 
@@ -288,9 +285,29 @@ module Promotion
       "(#{@discount}% off of every after the #{@size}#{number_suffix})"
     end
   end
+
+  class NoPromotion
+    def item_discount(price, quantity)
+      0
+    end
+
+    def invoice
+      ''
+    end
+  end
 end
 
 module Coupon
+  def self.create(name, hash)
+    type, value = hash.to_a.first
+
+    case type
+      when :percent then PercentCoupon.new(name, value)
+      when :amount  then AmountCoupon.new(name, value)
+      else NoCoupon.new
+    end
+  end
+
   class PercentCoupon
     attr_reader :name, :percent
 
@@ -322,6 +339,14 @@ module Coupon
 
     def invoice
       "Coupon #{@name} - #{sprintf '%.2f', @amount.to_f} off"
+    end
+  end
+
+  class NoCoupon
+    attr_reader :name
+
+    def discount(order_price)
+      0
     end
   end
 end
