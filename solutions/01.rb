@@ -11,7 +11,7 @@ class Array
     hash
   end
 
-  def subarray_count subarray
+  def subarray_count(subarray)
     count = 0
     0.upto(size - 1) { |i| count += 1 if subarray == self[i, subarray.size] }
     count
