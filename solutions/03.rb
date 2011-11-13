@@ -146,11 +146,11 @@ class ShoppingCart
   end
 
   def products_price
-    @goods.inject(0) { |sum, cart_item| sum += cart_item.price }
+    @goods.map(&:price).inject(:+)
   end
 
   def products_discount
-    @goods.inject(0) { |sum, cart_item| sum += cart_item.discount }
+    @goods.map(&:discount).inject(:+)
   end
 
   def coupon_discount
