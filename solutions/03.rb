@@ -345,56 +345,63 @@ module Coupon
     def discount(order_price)
       0
     end
+
+    def invoice
+      ''
+    end
   end
 end
 
 class Invoice
-  SEPARATOR = "+------------------------------------------------+----------+\n"
-  HEADER    = "| Name                                       qty |    price |\n"
-  TOTAL     = "| TOTAL                                          |"
+  #SEPARATOR = "+------------------------------------------------+----------+\n"
+  SEPARATOR = '+' + '-' * 48 + '+' + '-' * 10 + '+' + "\n"
 
   attr_reader :cart, :invoice
 
   def initialize(cart)
-    @cart = cart
+    @cart    = cart
+    @invoice = ''
+
     @invoice = create_invoice
   end
 
-  def print(price)
-    sprintf '%.2f', price
-  end
-
   def invoice_header
-    SEPARATOR + HEADER + SEPARATOR
+    # SEPARATOR + print('Name', 'qty', 'price') + SEPARATOR
+
+    @invoice << SEPARATOR
+    print 'Name', 'qty', 'price'
+    @invoice << SEPARATOR
   end
 
-  def invoice_body
-    body = ''
-
-    @cart.goods.each do |cart_item|
-      body += "| #{cart_item.product.name.ljust 40} #{cart_item.quantity.to_s.rjust 5}" +
-              " | #{print(cart_item.price).rjust 8} |\n"
-      body += "|   #{cart_item.product.promotion.invoice.ljust 44} | " +
-              "#{print(0 - cart_item.discount).rjust 8} |\n" if cart_item.promotional?
+  def invoice_items
+    @cart.goods.each do |item|
+      print item.product.name, item.quantity, amount(item.price)
+      print "  #{item.product.promotion.invoice}", '', amount(-item.discount)
     end
-
-    body
   end
 
   def invoice_coupon
-    coupon = ''
-
-    coupon += "| #{cart.coupon.invoice.ljust 46} | " +
-              "#{print(0 - cart.coupon_discount).rjust 8} |\n" unless cart.coupon.kind_of? Coupon::NoCoupon
-
-    coupon
+    print @cart.coupon.invoice, '', amount(-@cart.coupon_discount)
   end
 
   def invoice_total
-    SEPARATOR + TOTAL + "#{sprintf('%.2f', cart.total).to_s.rjust 9} |\n" + SEPARATOR
+    @invoice << SEPARATOR
+    print 'TOTAL', '', amount(@cart.total)
+    @invoice << SEPARATOR
   end
 
   def create_invoice
-    invoice_header + invoice_body + invoice_coupon + invoice_total
+    invoice_header
+    invoice_items
+    invoice_coupon
+    invoice_total
+  end
+
+  def amount(decimal)
+    "%5.2f" % decimal
+  end
+
+  def print(*args)
+    @invoice << "| %-40s %5s | %8s |\n" % args unless args[0].strip == ''
   end
 end
