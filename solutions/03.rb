@@ -353,8 +353,7 @@ module Coupon
 end
 
 class Invoice
-  #SEPARATOR = "+------------------------------------------------+----------+\n"
-  SEPARATOR = '+' + '-' * 48 + '+' + '-' * 10 + '+' + "\n"
+  SEPARATOR = "+#{'-' * 48}+#{'-' * 10}+\n"
 
   attr_reader :cart, :invoice
 
