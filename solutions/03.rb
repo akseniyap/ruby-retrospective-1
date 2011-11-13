@@ -251,7 +251,7 @@ module Promotion
     end
 
     def discounted_items(quantity)
-      (quantity - @threshold) < 0 ? 0 : (quantity - @threshold)
+      quantity < @threshold ? 0 : (quantity - @threshold)
     end
 
     def discount(price, quantity)
@@ -317,7 +317,7 @@ module Coupon
     end
 
     def discount(price)
-      (price - @amount) < 0 ? price : @amount
+      price < @amount ? price : @amount
     end
 
     def description
