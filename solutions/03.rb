@@ -56,10 +56,9 @@ class Inventory
 
   def find(item)
     type, name = item.to_a.first
-
     container = type == :product ? @stock : @coupons
 
-    container.detect { |item| item.name == name }
+    container.detect { |item| item.name == name } or raise "No #{type} #{name}"
   end
 
   def new_cart
@@ -74,6 +73,7 @@ class Inventory
       raise error_message if registered.include? item.downcase
     end
 end
+
 
 class CartItem
   QUANTITY_LIMIT = 99
