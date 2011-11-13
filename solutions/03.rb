@@ -9,7 +9,7 @@ class Product
 
   attr_reader :name, :price, :promotion
 
-  def initialize(name, price, promotion={})
+  def initialize(name, price, promotion = {})
     price = price.to_d
 
     validate_length_of             name
@@ -55,7 +55,7 @@ class Inventory
     @coupons = []
   end
 
-  def register(name, price, promotion={})
+  def register(name, price, promotion = {})
     validate_uniqueness_of name, stock
 
     product = Product.new name, price, promotion
@@ -134,14 +134,14 @@ class ShoppingCart
   attr_reader :goods, :inventory
   attr_accessor :coupon, :invoice
 
-  def initialize(inventory, invoice='')
+  def initialize(inventory, invoice = '')
     @inventory = inventory
     @goods = []
     @coupon = nil
     @invoice = invoice
   end
 
-  def add(name, quantity=1)
+  def add(name, quantity = 1)
     validate_registration_of name, inventory.stock
 
     item = goods.select { |item| item.product.name == name }
