@@ -12,8 +12,6 @@ class Array
   end
 
   def subarray_count subarray
-    return -1 if subarray == [] || size < subarray.size
-
     count = 0
     0.upto(size - 1) { |i| count += 1 if subarray == self[i, subarray.size] }
     count
