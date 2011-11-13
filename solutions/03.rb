@@ -335,7 +335,7 @@ module Coupon
     end
 
     def invoice
-      "Coupon #{@name} - #{sprintf '%.2f', @amount} off"
+      "Coupon #{@name} - #{"%5.2f" % @amount} off"
     end
   end
 
