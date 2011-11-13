@@ -260,17 +260,12 @@ module Promotion
       discounted * price * @percent / '100'.to_d
     end
 
-    def number_suffix
-      suffixes = {1 => 'st', 2 => 'nd', 3 => 'rd'}
-
-      suffix = suffixes[@threshold % 10] || 'th'
-      suffix = 'th' if [11, 12, 13].include? @threshold
-
-      suffix
+    def suffix
+      {1 => 'st', 2 => 'nd', 3 => 'rd'}.fetch @threshold, 'th'
     end
 
     def description
-      "  (#{@percent}% off of every after the #{@threshold}#{number_suffix})"
+      "  (#{@percent}% off of every after the #{@threshold}#{suffix})"
     end
   end
 
